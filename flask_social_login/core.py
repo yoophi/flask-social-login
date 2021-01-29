@@ -24,6 +24,7 @@ _datastore = LocalProxy(lambda: _social.datastore)
 _logger = LocalProxy(lambda: current_app.logger)
 
 default_config = {
+    "SOCIAL_AUTO_REGISTER_USER": False,
     "SOCIAL_BLUEPRINT_NAME": "social",
     "SOCIAL_FLASH_MESSAGES": "true",
     "SOCIAL_URL_PREFIX": None,
@@ -32,6 +33,7 @@ default_config = {
     "SOCIAL_POST_LOGIN_VIEW": "/",
     "SOCIAL_POST_OAUTH_CONNECT_SESSION_KEY": "post_oauth_connect_url",
     "SOCIAL_POST_OAUTH_LOGIN_SESSION_KEY": "post_oauth_login_url",
+    "SOCIAL_CONNECTION_NOT_FOUND_HANDLER": lambda cv: _logger.info(f"cv={cv}"),
     "SOCIAL_APP_URL": "http://localhost",
 }
 
@@ -120,8 +122,7 @@ class Social(object):
                 not key.startswith("SOCIAL_"),
                 config is None,
                 key in default_config
-                ]
-            ):
+            ]):
                 continue
 
             suffix = key.lower().replace("social_", "")

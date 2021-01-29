@@ -18,12 +18,10 @@ from flask import (
     session,
     after_this_request,
     abort,
-    url_for,
 )
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_social_login.utils import get_url, do_flash, get_post_login_redirect
 
-# from flask.ext.security.decorators import anonymous_user_required
 from flask_social_login.utils import anonymous_user_required
 from werkzeug.local import LocalProxy
 
@@ -36,8 +34,7 @@ from .utils import (
 )
 
 # Convenient references
-# _security = LocalProxy(lambda: current_app.extensions["security"])
-_user_manager = LocalProxy(lambda: current_app.extensions["user_manager"])
+_login_manager = LocalProxy(lambda: current_app.extensions["login_manager"])
 
 _social = LocalProxy(lambda: current_app.extensions["social"])
 
@@ -192,6 +189,7 @@ def login_handler(response, provider, query):
             connection.access_token = token_pair["access_token"]
             connection.secret = token_pair["secret"]
             _datastore.put(connection)
+
         user = connection.user
         login_user(user)
         key = _social.post_oauth_login_session_key
@@ -199,7 +197,22 @@ def login_handler(response, provider, query):
 
         return redirect(redirect_url)
 
-    next = get_url(_user_manager.login_manager.login_view)
+    elif _social.auto_register_user:
+        cv = get_connection_values_from_oauth_response(provider, response)
+        if cv is None:
+            do_flash("Access was denied by %s" % provider.name, "error")
+            return redirect(get_url(config_value("CONNECT_DENY_VIEW")))
+
+        connection = _social.connection_not_found_handler(cv)
+
+        user = connection.user
+        login_user(user)
+        key = _social.post_oauth_login_session_key
+        redirect_url = session.pop(key, get_post_login_redirect())
+
+        return redirect(redirect_url)
+
+    next = get_url(_login_manager.login_view)
     msg = "%s account not associated with an existing user" % provider.name
     do_flash(msg, "error")
     return redirect(next)
@@ -219,7 +232,7 @@ def login_callback(provider_id):
 
         if response is None:
             do_flash("Access was denied to your %s " "account" % provider.name, "error")
-            return _user_manager.login_manager.unauthorized(), None
+            return _login_manager.unauthorized(), None
 
         query = dict(
             provider_user_id=module.get_provider_user_id(response),
