@@ -136,8 +136,6 @@ def connect_handler(cv, provider):
     :param connection_values: A dictionary containing the connection values
     :param provider_id: The provider ID the connection shoudl be made to
     """
-    print(f'current_user = {current_user}')
-    print(f'current_user.get_id() = {current_user.get_id()}')
     cv.setdefault("user_id", current_user.get_id())
     connection = _datastore.find_connection(
         provider_id=cv["provider_id"], provider_user_id=cv["provider_user_id"]
@@ -145,8 +143,6 @@ def connect_handler(cv, provider):
 
     if connection is None:
         after_this_request(_commit)
-        print('== connection is None ==')
-        print(f'cv = {cv}')
         connection = _datastore.create_connection(**cv)
         msg = ("Connection established to %s" % provider.name, "success")
     else:
@@ -184,11 +180,9 @@ def connect_callback(provider_id):
 def login_handler(response, provider, query):
     """Shared method to handle the signin process"""
 
-    print('login_handler')
     connection = _datastore.find_connection(**query)
 
     if connection:
-        print('1')
         after_this_request(_commit)
         token_pair = get_token_pair_from_oauth_response(provider, response)
         if (
@@ -204,27 +198,18 @@ def login_handler(response, provider, query):
         redirect_url = session.pop(key, get_post_login_redirect())
 
         return redirect(redirect_url)
-    print('2')
 
     next = get_url(_user_manager.login_manager.login_view)
     msg = "%s account not associated with an existing user" % provider.name
     do_flash(msg, "error")
-    print(f'msg: {msg}')
-    print(f'next: {next}')
     return redirect(next)
 
 
 def login_callback(provider_id):
-    print('== login_callback ==')
-    print(f'_social.providers = {_social.providers}')
-    print(f'provider_id = {provider_id}')
     try:
-        print(1)
         provider = _social.providers[provider_id]
         module = import_module(provider.module)
-        print(f'module = {module}')
     except KeyError:
-        print(2)
         abort(404)
 
     def login(response):
@@ -244,11 +229,8 @@ def login_callback(provider_id):
         return response, query
 
     response, query = provider.authorized_handler(login)()
-    print(f'response, query = {response}, {query}')
     if query is None:
-        print('x')
         return response
-    print('y')
     return login_handler(response, provider, query)
 
 

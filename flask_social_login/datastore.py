@@ -53,8 +53,6 @@ class ConnectionDatastore(object):
         raise NotImplementedError
 
     def create_connection(self, **kwargs):
-        print('== create_connection ==')
-        print(f'kwargs = {kwargs}')
         return self.put(self.connection_model(**kwargs))
 
     def delete_connection(self, **kwargs):

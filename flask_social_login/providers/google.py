@@ -52,8 +52,6 @@ def get_provider_user_id(response, **kwargs):
             access_token=response["access_token"], user_agent=""
         )
         profile = _get_api(credentials).userinfo().get().execute()
-        print('get_provider_user_id')
-        print(f'profile={profile}')
         return profile["id"]
     return None
 
@@ -69,21 +67,9 @@ def get_connection_values(response, **kwargs):
     )
 
     profile = _get_api(credentials).userinfo().get().execute()
-    print('== get_connection_values ==')
-    print(f'profile={profile}')
-    '''
-    profile={'id': '104240892984546281908'
-             'name': '유병혁'
-             'given_name': '병혁'
-             'family_name': '유'
-             'picture': 'https://lh3.googleusercontent.com/a-/AOh14GiUE4c4pRdQBlIEqwzP53EtGay0AkDEkEws2s5b=s96-c'
-             'locale': 'en'}
-
-   '''
     rv = dict(provider_id=config["id"], provider_user_id=profile["id"], access_token=access_token, secret=None,
              display_name=profile["name"], full_name=profile["name"], profile_url=profile.get("link"),
              image_url=profile.get("picture"), email=profile.get("email"), )
-    print(f'rv={rv}')
 
     return rv
 
