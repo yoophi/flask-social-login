@@ -28,6 +28,7 @@ default_config = {
     "SOCIAL_BLUEPRINT_NAME": "social",
     "SOCIAL_FLASH_MESSAGES": "true",
     "SOCIAL_URL_PREFIX": None,
+    "SOCIAL_USE_HTTPS": False,
     "SOCIAL_CONNECT_ALLOW_VIEW": "/",
     "SOCIAL_CONNECT_DENY_VIEW": "/",
     "SOCIAL_POST_LOGIN_VIEW": "/",

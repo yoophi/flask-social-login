@@ -53,6 +53,8 @@ def login(provider_id):
     """Starts the provider login OAuth flow"""
     provider = get_provider_or_404(provider_id)
     callback_url = get_authorize_callback("login", provider_id)
+    if _social.use_https:
+        callback_url = callback_url.replace('http://', 'https://')
     post_login = request.form.get("next", get_post_login_redirect())
     session[config_value("POST_OAUTH_LOGIN_SESSION_KEY")] = post_login
     return provider.authorize(callback_url)
@@ -191,11 +193,11 @@ def login_handler(response, provider, query):
             _datastore.put(connection)
 
         user = connection.user
-        login_user(user)
-        key = _social.post_oauth_login_session_key
-        redirect_url = session.pop(key, get_post_login_redirect())
-
-        return redirect(redirect_url)
+        if user:
+            login_user(user)
+            key = _social.post_oauth_login_session_key
+            redirect_url = session.pop(key, get_post_login_redirect())
+            return redirect(redirect_url)
 
     elif _social.auto_register_user:
         cv = get_connection_values_from_oauth_response(provider, response)
@@ -204,13 +206,12 @@ def login_handler(response, provider, query):
             return redirect(get_url(config_value("CONNECT_DENY_VIEW")))
 
         connection = _social.connection_not_found_handler(cv)
-
         user = connection.user
-        login_user(user)
-        key = _social.post_oauth_login_session_key
-        redirect_url = session.pop(key, get_post_login_redirect())
-
-        return redirect(redirect_url)
+        if user:
+            login_user(user)
+            key = _social.post_oauth_login_session_key
+            redirect_url = session.pop(key, get_post_login_redirect())
+            return redirect(redirect_url)
 
     next = get_url(_login_manager.login_view)
     msg = "%s account not associated with an existing user" % provider.name
